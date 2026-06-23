@@ -1,0 +1,45 @@
+variables:
+  GIT_STRATEGY: none
+
+stages:
+  - pull
+  - validate
+  - build
+
+# ── Templates ─────────────────────────────────────────
+
+.on_develop:
+  only:
+    - develop
+  tags:
+    - qa
+  before_script:
+    - export NVM_DIR="/home/odootst3/.nvm"
+    - source "$NVM_DIR/nvm.sh"
+    - git config --global --add safe.directory $QA_PATH
+    - cd $QA_PATH
+
+# ── develop → Servidor QA ─────────────────────────────
+
+pull:qa:
+  extends: .on_develop
+  stage: pull
+  script:
+    - git pull
+
+validate:qa:
+  extends: .on_develop
+  stage: validate
+  script:
+    - npm install
+    - npm audit --audit-level=moderate
+    - npm run type-check
+    - npm run lint
+    - npm run test:unit
+  coverage: '/All files[^|]*\|[^|]*\s+([\d\.]+)/'
+
+build:qa:
+  extends: .on_develop
+  stage: build
+  script:
+    - npm run build

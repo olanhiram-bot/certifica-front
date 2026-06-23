@@ -1,0 +1,223 @@
+:root {
+  --app-bg: #f5f7fb;
+  --app-surface: #ffffff;
+  --app-border: #d9dee8;
+  --app-text: #202733;
+  --app-muted: #667085;
+  --app-primary: #2563eb;
+  --app-primary-dark: #1e40af;
+  --app-radius: 8px;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  background: var(--app-bg);
+  color: var(--app-text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0;
+}
+
+a {
+  color: var(--app-primary);
+}
+
+.navbar {
+  min-height: 62px;
+}
+
+.navbar-brand {
+  letter-spacing: 0;
+}
+
+.card,
+.dropdown-menu,
+.modal-content,
+.alert,
+.form-control,
+.form-select,
+.btn {
+  border-radius: var(--app-radius);
+}
+
+.card {
+  border-color: var(--app-border);
+}
+
+.form-control,
+.form-select {
+  border-color: var(--app-border);
+  min-height: 40px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--app-primary);
+  box-shadow: 0 0 0 0.2rem rgb(37 99 235 / 14%);
+}
+
+.btn-primary {
+  background-color: var(--app-primary);
+  border-color: var(--app-primary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: var(--app-primary-dark);
+  border-color: var(--app-primary-dark);
+}
+
+.contenedor_general,
+.main_content,
+.container_app {
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.caja_titulo,
+.caja_banner,
+.seccion_titulo {
+  background: var(--app-surface) !important;
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  padding: 1.25rem !important;
+  margin-bottom: 1rem;
+  color: var(--app-text);
+}
+
+.caja_titulo h1,
+.caja_titulo h2,
+.caja_banner h1,
+.caja_banner h2 {
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  margin-bottom: 0.5rem;
+}
+
+.caja_titulo p,
+.caja_banner p {
+  color: var(--app-muted);
+  margin-bottom: 0;
+}
+
+.caja_tarjeta,
+.tarjeta,
+.tarjeta_horizontal,
+.card-like,
+.caja_datos,
+.caja_navegador {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--app-radius);
+  box-shadow: 0 8px 24px rgb(16 24 40 / 5%);
+}
+
+.caja_tarjeta,
+.tarjeta,
+.tarjeta_horizontal,
+.card-like {
+  padding: 1rem;
+}
+
+.boton,
+.boton_primario,
+.boton_secundario,
+.boton_terciario {
+  align-items: center;
+  border-radius: var(--app-radius);
+  border: 1px solid transparent;
+  cursor: pointer;
+  display: inline-flex;
+  font-weight: 600;
+  gap: 0.35rem;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0.5rem 0.9rem;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.boton_primario,
+.boton.boton_primario {
+  background: var(--app-primary);
+  color: #fff;
+}
+
+.boton_primario:hover,
+.boton.boton_primario:hover {
+  background: var(--app-primary-dark);
+  color: #fff;
+}
+
+.boton_secundario,
+.boton.boton_secundario {
+  background: #fff;
+  border-color: var(--app-border);
+  color: var(--app-text);
+}
+
+.boton_terciario,
+.boton.boton_terciario {
+  background: transparent;
+  color: var(--app-primary);
+}
+
+.table,
+table {
+  background: #fff;
+  border-color: var(--app-border);
+  vertical-align: middle;
+}
+
+.table thead,
+table thead {
+  background: #f8fafc;
+}
+
+.badge,
+.boton_etiqueta {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.seccion_alerta,
+.alerta {
+  border-radius: var(--app-radius);
+  margin-bottom: 1rem;
+}
+
+.login-visual {
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  width: 100%;
+}
+
+.hero-visual {
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  width: 100%;
+}
+
+.v-vlite,
+.__vue-devtools-container__,
+[data-v-app] + div[style*="position: fixed"] {
+  display: none !important;
+}
+
+@media (max-width: 991.98px) {
+  aside[style*="width: 260px"] {
+    display: none !important;
+  }
+
+  .contenedor_general,
+  .main_content,
+  .container_app {
+    padding: 0.75rem;
+  }
+}
+
