@@ -11,7 +11,7 @@ export const cajaLineamientosData: CajaTituloData = {
 
 export const cajaModulosData: CajaTituloData = {
   titulo: 'Módulos',
-  descripcion: 'En este módulo adquiriste los conceptos clave de perspectiva de género y aprendiste cómo aplicarlos dentro de tu empresa para promover espacios más seguros, igualitarios y libres de discriminación.',
+  descripcion: 'En este módulo revisaste conceptos operativos básicos y aprendiste cómo aplicarlos para organizar mejor el expediente y las evidencias.',
   imagen:'' ,
 }
 

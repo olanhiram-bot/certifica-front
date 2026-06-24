@@ -21,12 +21,12 @@
           <div :class="isAdmin ? 'col-10' : 'col-12'">
             <h4 class="mb-0">{{ section.name }}</h4>
           </div>
-          <div v-if="isAdmin" class="col-2 text-end">
-            <button type="button" class="boton boton_terciario solo_icono" @click="openEditSectionModal(section)">
-              <span class="material-icons">edit</span>
+          <div v-if="isAdmin" class="col-2 section-actions">
+            <button type="button" class="section-action" aria-label="Editar sección" @click="openEditSectionModal(section)">
+              <i class="bi bi-pencil"></i>
             </button>
-            <button type="button" class="boton boton_terciario solo_icono" @click="openDeleteSectionModal(section)">
-              <span class="material-icons">delete</span>
+            <button type="button" class="section-action section-action--danger" aria-label="Eliminar sección" @click="openDeleteSectionModal(section)">
+              <i class="bi bi-trash"></i>
             </button>
           </div>
         </div>
@@ -388,3 +388,50 @@ const handleActivityDeleteConfirm = async () => {
   }
 }
 </script>
+
+<style scoped>
+.section-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.section-action {
+  align-items: center;
+  background: #f5f8ff;
+  border: 1px solid #d8e3ff;
+  border-radius: 999px;
+  color: #2563eb;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  width: 34px;
+}
+
+.section-action:hover,
+.section-action:focus-visible {
+  background: #e8f0ff;
+  border-color: #b8cbff;
+  color: #1d4ed8;
+}
+
+.section-action--danger {
+  background: #fff7f7;
+  border-color: #ffd6d6;
+  color: #dc2626;
+}
+
+.section-action--danger:hover,
+.section-action--danger:focus-visible {
+  background: #fff0f0;
+  border-color: #ffb8b8;
+  color: #b91c1c;
+}
+
+.section-action i {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+</style>

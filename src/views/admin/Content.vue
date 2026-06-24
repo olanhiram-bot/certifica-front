@@ -1,83 +1,132 @@
 <template>
-  <div class="contenedor_general default">
+  <div class="container_app">
     <!-- Breadcrumbs -->
-    <div class="row">
-      <div class="col-md-12">
-        <nav class="migas mb-3" style="padding-left: 0px;">
-          <router-link to="/admin">Inicio</router-link><span>Contenido</span>
-        </nav>
-      </div>
-    </div>
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+          <router-link to="/admin" class="text-decoration-none">Inicio</router-link>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Contenido</li>
+      </ol>
+    </nav>
 
-    <!-- Botones -->
-    <div class="row gy-2">
-      <div class="col-md-4">
-        <button class="boton boton_primario" @click="openCreateModal"><span class="material-icons">add</span> Agregar</button>
+    <!-- Page header + actions -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="p-2 bg-primary bg-opacity-10 rounded-3">
+          <i class="bi bi-layout-text-window fs-4 text-primary"></i>
+        </div>
+        <div>
+          <h1 class="h4 mb-0 fw-bold text-dark">Contenido</h1>
+          <p class="text-muted mb-0 small">Permite gestionar y organizar el contenido de la plataforma.</p>
+        </div>
       </div>
-      <div class="col-md-8 d-flex justify-content-end align-items-end gap-4">
-        <div class="dropdown" style="position: relative;" ref="dropdownRef">
-          <button class="boton boton_terciario d-inline-flex align-items-center gap-2" @click.stop="showDropdown = !showDropdown" type="button">
-            <span class="material-icons">filter_list</span>
-            Tipo
-            <span class="material-icons" style="font-size: 18px;">arrow_drop_down</span>
+
+      <div class="d-flex flex-wrap gap-2">
+        <!-- Tipo dropdown -->
+        <div class="dropdown" ref="dropdownRef">
+          <button
+            class="btn btn-outline-secondary d-inline-flex align-items-center gap-2"
+            type="button"
+            @click.stop="showDropdown = !showDropdown"
+          >
+            <i class="bi bi-funnel"></i>
+            {{ selectedTypeLabel }}
+            <i class="bi bi-chevron-down small"></i>
           </button>
-          <ul v-if="showDropdown" class="dropdown-menu show" style="display: block; position: absolute; right: 0; min-width: 180px; z-index: 1050;">
+          <ul v-if="showDropdown" class="dropdown-menu show" style="display: block; z-index: 1050;">
             <li v-for="option in typeOptions" :key="option.id">
-              <a class="dropdown-item" href="#" @click.prevent="selectType(option)">{{ option.name }}</a>
+              <a
+                class="dropdown-item d-flex align-items-center gap-2"
+                href="#"
+                @click.prevent="selectType(option)"
+              >
+                <i v-if="contentType === option.id" class="bi bi-check2 text-primary"></i>
+                <span :class="contentType === option.id ? 'fw-semibold text-primary' : ''">{{ option.name }}</span>
+              </a>
             </li>
           </ul>
         </div>
-        <Search class="w-auto" placeholder="Buscar contenido..." @on-search="handleSearch" />
-      </div>
-    </div>
 
-    <!-- Titulo -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="seccion_titulo mt-4" style="margin-top: 0px;">
-          <h3>Contenido</h3>
-          <p>Permite gestionar y organizar el contenido de la plataforma.</p>
-        </div>
+        <!-- Search -->
+        <Search class="w-auto" placeholder="Buscar contenido..." @on-search="handleSearch" />
+
+        <!-- Agregar -->
+        <button class="btn btn-primary d-inline-flex align-items-center gap-2" @click="openCreateModal">
+          <i class="bi bi-plus-lg"></i>
+          Agregar
+        </button>
       </div>
     </div>
 
     <!-- Tabla de contenido -->
-    <div class="row mt-4">
-      <div class="col-12">
-        <div class="caja_tabla">
-          <Table :thead="['Media', 'Nombre', 'Módulo', 'Posición', 'Acciones']">
-            <tr v-if="contentItems.length === 0 && !loadingTable">
-              <td colspan="5" class="estado_tabla text-center">Sin contenido.</td>
-            </tr>
-            <tr v-else-if="loadingTable">
-              <td colspan="5" class="estado_tabla text-center">
-                Cargando...
-              </td>
-            </tr>
-            <tr v-for="item in contentItems" :key="item.id">
-              <td>
-                <a v-if="item.file_url || item.image_url" @click="openPreview(item)">Ver contenido</a>
-                <span v-else>—</span>
-              </td>
-              <td>{{ item.name ?? '—' }}</td>
-              <td>{{ item.landing_content_type?.name ?? '—' }}</td>
-              <td>{{ item.position ?? '—' }}</td>
-              <td>
-                <button class="boton boton_terciario solo_icono" @click="openEditModal(item)"><span class="material-icons">edit</span></button>
-                <button class="boton boton_terciario solo_icono" @click="openDeleteModal(item)"><span class="material-icons">delete</span></button>
-              </td>
-            </tr>
-          </Table>
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table align-middle table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="px-4 py-3">Media</th>
+                <th class="px-4 py-3">Nombre</th>
+                <th class="px-4 py-3">Módulo</th>
+                <th class="px-4 py-3 text-center">Posición</th>
+                <th class="px-4 py-3 text-center">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-if="loadingTable">
+                <td colspan="5" class="text-center text-muted py-5">
+                  <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>
+                  Cargando...
+                </td>
+              </tr>
+              <tr v-else-if="contentItems.length === 0">
+                <td colspan="5" class="text-center text-muted py-5">Sin contenido.</td>
+              </tr>
+              <tr v-else v-for="item in contentItems" :key="item.id">
+                <td class="px-4">
+                  <a v-if="item.file_url || item.image_url" href="#" class="text-primary text-decoration-none d-inline-flex align-items-center gap-2" @click.prevent="openPreview(item)">
+                    <i class="bi bi-eye"></i>
+                    Ver contenido
+                  </a>
+                  <span v-else class="text-muted">—</span>
+                </td>
+                <td class="px-4 fw-semibold">{{ item.name ?? '—' }}</td>
+                <td class="px-4">
+                  <span class="badge text-bg-light border">{{ item.landing_content_type?.name ?? '—' }}</span>
+                </td>
+                <td class="px-4 text-center">{{ item.position ?? '—' }}</td>
+                <td class="px-4 text-center">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm btn-outline-secondary" title="Editar" @click="openEditModal(item)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" title="Eliminar" @click="openDeleteModal(item)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-          <div v-if="!loadingTable && contentItems.length > 0" class="barra_paginacion">
-            <Pagination :links="pagination.links" :current-page="pagination.page" :per-page="pagination.perPage"
-              :total="pagination.total" :to="pagination.to" @on-page="handlePageChange" />
-          </div>
+        <!-- Paginación -->
+        <div v-if="!loadingTable && contentItems.length > 0" class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 px-4 py-3 border-top">
+          <span class="text-muted small">Total: {{ pagination.total }} registros</span>
+          <Pagination
+            :links="pagination.links"
+            :current-page="pagination.page"
+            :per-page="pagination.perPage"
+            :total="pagination.total"
+            :to="pagination.to"
+            @on-page="handlePageChange"
+          />
         </div>
       </div>
     </div>
 
-    <!-- Modal Preview Evidencia -->
+    <!-- Modal Preview -->
     <Modal ref="previewModal" modalId="previewEvidenceModal" title="Vista Previa" size="xl" :buttons="previewModalButtons">
       <template #body>
         <div v-if="isLoadingPdf" class="text-center py-5">
@@ -97,7 +146,7 @@
             <button class="btn btn-outline-secondary btn-sm" @click="previewCurrentPage--" :disabled="previewCurrentPage <= 1">
               <i class="bi bi-chevron-left"></i> Anterior
             </button>
-            <span>Página {{ previewCurrentPage }} de {{ previewTotalPages }}</span>
+            <span class="text-muted small">Página {{ previewCurrentPage }} de {{ previewTotalPages }}</span>
             <button class="btn btn-outline-secondary btn-sm" @click="previewCurrentPage++" :disabled="previewCurrentPage >= previewTotalPages">
               Siguiente <i class="bi bi-chevron-right"></i>
             </button>
@@ -106,7 +155,7 @@
       </template>
     </Modal>
 
-    <!-- Modal Crear / Editar Contenido -->
+    <!-- Modal Crear / Editar -->
     <Modal
       ref="formModal"
       modalId="contentFormModal"
@@ -125,7 +174,7 @@
       </template>
     </Modal>
 
-    <!-- Modal Eliminar Contenido -->
+    <!-- Modal Eliminar -->
     <Modal
       ref="deleteModal"
       modalId="contentDeleteModal"
@@ -138,7 +187,9 @@
           Esta acción no se puede deshacer.
         </p>
         <div class="mb-1">
-          <label for="delete_reason" class="form-label">Motivo de eliminación <span class="text-danger">*</span></label>
+          <label for="delete_reason" class="form-label fw-semibold">
+            Motivo de eliminación <span class="text-danger">*</span>
+          </label>
           <textarea
             id="delete_reason"
             v-model="deleteReason"
@@ -157,7 +208,6 @@
 <script setup lang="ts">
 import Pagination from '@/components/Pagination.vue'
 import Search from '@/components/Search.vue'
-import Table from '@/components/Table.vue'
 import { getLandingContentsByType, createLandingContent, updateLandingContent, deleteLandingContent } from '@/api/landingContent'
 import type { LandingContent } from '@/interfaces/LandingContent'
 import type { LinkPaginate } from '@/interfaces/LinkPaginate'
@@ -174,7 +224,6 @@ const toast = useToast()
 const contentItems = ref<LandingContent[]>([])
 const loadingTable = ref(false)
 const currentPage = ref(1)
-// TODO: contentType se asignará dinámicamente desde el botón "Tipo" cuando exista el endpoint
 const contentType = ref(1)
 const filterValue = ref('')
 const showDropdown = ref(false)
@@ -203,6 +252,7 @@ const handleClickOutside = (event: MouseEvent) => {
 onBeforeUnmount(() => {
   document.removeEventListener('click', handleClickOutside)
 })
+
 const pagination = ref({ page: 1, perPage: 10, total: 0, lastPage: 1, to: 0, links: [] as LinkPaginate[] })
 
 const handleSearch = (value: string) => {
@@ -273,10 +323,8 @@ const openPreview = (item: LandingContent) => {
 
 const openPreviewFull = (url: string) => {
   const fullUrl = import.meta.env.VITE_STORAGE_URL ? `${import.meta.env.VITE_STORAGE_URL}/storage/${url}` : url
-
   const ext = getFileExtension(url)
 
-  // Reset state
   pdfLoadError.value = false
   previewCurrentPage.value = 1
   previewIsImage.value = false
@@ -291,7 +339,6 @@ const openPreviewFull = (url: string) => {
     isLoadingPdf.value = true
     previewUrl.value = fullUrl
   } else {
-    // Same URL already loaded
     isLoadingPdf.value = false
     pdfBlobUrl.value = fullUrl
   }
@@ -317,7 +364,7 @@ const fetchContentTypes = async () => {
   }
 }
 
-// ——— Create / Edit modal ———
+// Create / Edit modal
 const formModal = ref<InstanceType<typeof Modal> | null>(null)
 const contentFormRef = ref<InstanceType<typeof ContentForm> | null>(null)
 const selectedItem = ref<LandingContent | null>(null)
@@ -374,7 +421,7 @@ const handleFormSubmit = async (formData: FormData) => {
   }
 }
 
-// ——— Delete modal ———
+// Delete modal
 const deleteModal = ref<InstanceType<typeof Modal> | null>(null)
 const deleteReason = ref('')
 const deleteReasonError = ref('')
@@ -430,4 +477,3 @@ onMounted(() => {
   fetchContentTypes()
 })
 </script>
-

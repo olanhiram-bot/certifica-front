@@ -1,26 +1,32 @@
 <template>
-  <div class="contenedor_general">
+  <div class="container_app">
     <!-- Breadcrumbs -->
-    <div class="row">
-      <div class="col-md-12">
-        <nav class="migas" style="padding-left: 0px;">
-          <router-link to="/admin">Inicio</router-link><span>Gestión documental</span>
-        </nav>
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb mb-0">
+        <li class="breadcrumb-item">
+          <router-link to="/admin" class="text-decoration-none">Inicio</router-link>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page">Gestión documental</li>
+      </ol>
+    </nav>
+
+    <!-- Page header -->
+    <div class="d-flex align-items-center gap-3 mb-4">
+      <div class="p-2 bg-primary bg-opacity-10 rounded-3">
+        <i class="bi bi-file-earmark-text fs-4 text-primary"></i>
+      </div>
+      <div>
+        <h1 class="h4 mb-0 fw-bold text-dark">Gestión documental</h1>
+        <p class="text-muted mb-0 small">Permite gestionar y organizar el contenido de la evaluación documental.</p>
       </div>
     </div>
 
-    <!-- Titulo -->
-    <div class="row">
-      <div class="col-md-12">
-        <div class="seccion_titulo mt-4" style="margin-top: 0px;">
-          <h3>Gestión documental</h3>
-          <p>Permite gestionar y organizar el contenido de la evaluación documental.</p>
-        </div>
+    <!-- Contenido -->
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-4">
+        <Sections class="mt-0" :section-type-id="2" />
       </div>
     </div>
-
-    <!-- Tabla de contenido -->
-    <Sections class="mt-4" :section-type-id="2" />
   </div>
 </template>
 

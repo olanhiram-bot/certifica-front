@@ -8,7 +8,7 @@ export type { TarjetaData }
 
 export const tarjetaData1: TarjetaData = {
   titulo: '¿Qué es el Certifica?',
-  descripcion: 'El Certifica es un reconocimiento otorgado por el organizacion, a través de la equipo evaluador de Administración, a los usuarios que acreditan acciones y prácticas orientadas a la igualdad de género, la inclusión y la prevención de la violencia contra las mujeres en el entorno laboral. \n\nSu objetivo es impulsar culturas laborales más seguras, respetuosas y con oportunidades equitativas para todas las personas.',
+  descripcion: 'El Certifica es un reconocimiento otorgado por el organizacion, a través de la equipo evaluador de Administración, a los usuarios que acreditan acciones y prácticas orientadas a la organización documental, mejora continua y seguimiento de procesos en el entorno laboral. \n\nSu objetivo es impulsar culturas laborales más seguras, respetuosas y con oportunidades equitativas para todas las personas.',
   boton: 'Acción',
   imagen: certificacion,
   alt: 'Certifica reconocimiento oficial',
@@ -29,11 +29,11 @@ export const tarjetaData2: TarjetaData = {
   descripcion: 'Cualquier usuario inscrito o persona en proceso de inscripción en el registro de usuarios del organizacion.',
   vinetas_titulo: 'Para personas físicas',
   vinetas: [
-    'Que la persona con actividad empresarial sea mujer; o que, en caso de ser hombre, cuente con al menos el 10% de participación de mujeres en su plantilla laboral.'
+    'Que la persona o empresa cuente con datos de registro completos y una operación verificable.'
   ],
   vinetas2_titulo: 'Para personas morales',
   vinetas2: [
-    'Que cuente con al menos una accionista y/o beneficiaria final mujer; o que al menos el 10% de su plantilla laboral esté integrada por mujeres.'
+    'Que cuente con documentación básica de operación, responsables asignados y evidencias disponibles.'
   ],
   boton: 'Acción',
   imagen: beneficios_2,
@@ -53,8 +53,8 @@ export const tarjetaData2: TarjetaData = {
 export const tarjetaData3: TarjetaData = {
   titulo: 'Beneficios para tu empresa',
   vinetas: [
-    'Impulsar la creación y fortalecimiento de políticas de igualdad laboral y no discriminación al interior de la empresa.',
-    'Fomentar la prevención y erradicación de la violencia contra las mujeres y por razón de género en los espacios laborales.',
+    'Impulsar la creación y fortalecimiento de políticas internas de operación.',
+    'Fomentar procesos claros de seguimiento, documentación y mejora continua.',
     'Mejora de reputación institucional y ventaja competitiva.',
     'Refuerzo de políticas internas de equidad y bienestar laboral.'
   ],

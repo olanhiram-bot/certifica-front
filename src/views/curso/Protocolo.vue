@@ -1,5 +1,5 @@
 ﻿<template>
-  <div class="contenedor_general">
+  <div class="container_app user-dashboard">
     <BreadcrumVue />
     <CajaTituloBannerVue :data="isAdmin ? cajaRevisionExpedienteData : cajaProtocoloData" />
 
@@ -40,6 +40,7 @@
                 <TarjetaArchivo :titulo="activity.name" :descripcion="getFileName(activity)"
                   :boton="getBotonText(activity)" :estado="getActivityStatus(activity)"
                   :estado-color="getActivityStatusColor(activity)" :es-visualizacion="false"
+                  :imagen="protocolCardImage"
                   :disabled-boton="isActionDisabled(activity)"
                   @click="handleActivityClick(activity, section.id)" />
               </div>
@@ -71,11 +72,12 @@
           </div>
           <div v-else class="row row-cols-1 row-cols-md-3 g-3 align-items-stretch">
             <div v-for="recurso in recursos" :key="recurso.id" class="col d-flex">
-              <TarjetaArchivo
-                :titulo="recurso.name ?? ''"
-                :descripcion="recurso.description ?? ''"
-                boton="Ver material"
-                @click="openRecursoModal(recurso)" />
+                <TarjetaArchivo
+                  :titulo="recurso.name ?? ''"
+                  :descripcion="recurso.description ?? ''"
+                  :imagen="protocolCardImage"
+                  boton="Ver material"
+                  @click="openRecursoModal(recurso)" />
             </div>
           </div>
         </div>
@@ -186,6 +188,7 @@ import SearchVue from '@/components/Search.vue'
 import SeccionTextoVue from '@/components/SeccionTexto.vue'
 import AlertaVue from '@/components/Alerta.vue'
 import TarjetaArchivo from '@/components/TarjetaArchivo.vue'
+import protocolCardImage from '@/assets/images/standard/protocol-card.png'
 import TarjetaHorizontal2Vue from '@/components/TarjetaHorizontal2.vue'
 import { cajaProtocoloData, cajaRevisionExpedienteData } from '@/data/cajaLineamientosData'
 import { seccionTextoData3 } from '@/data/seccionTextoData'

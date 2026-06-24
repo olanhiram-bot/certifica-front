@@ -1,7 +1,7 @@
 <template>
   <div class="caja_tarjeta h-100 d-flex flex-column">
     <div class="imagen_tarjeta">
-      <img decoding="async" :src="path + image" alt="" />
+    <img decoding="async" :src="imageSrc" alt="" />
     </div>
     <div class="cuerpo_tarjeta d-flex flex-column flex-grow-1">
       <h4 class="titulo_tarjeta">{{ title }}</h4>
@@ -32,12 +32,12 @@
       </div>
 
       <!-- Admin buttons -->
-      <div class="w-100 d-flex justify-content-end align-self-end mt-auto default">
-        <button v-if="isEdit" type="button" class="boton boton_terciario solo_icono" @click="$emit('edit')">
-          <span class="material-icons">edit</span>
+      <div class="activity-actions">
+        <button v-if="isEdit" type="button" class="activity-action" aria-label="Editar actividad" @click="$emit('edit')">
+          <i class="bi bi-pencil"></i>
         </button>
-        <button v-if="isDelete" type="button" class="boton boton_terciario solo_icono" @click="$emit('delete')">
-          <span class="material-icons">delete</span>
+        <button v-if="isDelete" type="button" class="activity-action activity-action--danger" aria-label="Eliminar actividad" @click="$emit('delete')">
+          <i class="bi bi-trash"></i>
         </button>
       </div>
     </div>
@@ -45,7 +45,8 @@
 </template>
 
 <script lang="ts" setup>
-import { type PropType } from 'vue'
+import { computed, type PropType } from 'vue'
+import protocolCardImage from '@/assets/images/standard/protocol-card.png'
 
 const path = import.meta.env.VITE_STORAGE_URL
 
@@ -117,4 +118,88 @@ const props = defineProps({
     default: 'upload'
   }
 })
+
+const imageSrc = computed(() => {
+  if (!props.image) return protocolCardImage
+  if (/^(https?:)?\/\//.test(props.image) || props.image.startsWith('/src/')) return props.image
+  return `${path}${props.image}`
+})
 </script>
+
+<style scoped>
+.caja_tarjeta {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.imagen_tarjeta {
+  aspect-ratio: 16 / 9;
+  background: #eef2f7;
+  border-radius: 6px;
+  flex: 0 0 auto;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.imagen_tarjeta img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+}
+
+.titulo_tarjeta,
+.texto_tarjeta {
+  overflow-wrap: anywhere;
+}
+
+.activity-actions {
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.activity-action {
+  align-items: center;
+  background: #f5f8ff;
+  border: 1px solid #d8e3ff;
+  border-radius: 999px;
+  color: #2563eb;
+  display: inline-flex;
+  height: 34px;
+  justify-content: center;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  width: 34px;
+}
+
+.activity-action:hover,
+.activity-action:focus-visible {
+  background: #e8f0ff;
+  border-color: #b8cbff;
+  color: #1d4ed8;
+}
+
+.activity-action--danger {
+  background: #fff7f7;
+  border-color: #ffd6d6;
+  color: #dc2626;
+}
+
+.activity-action--danger:hover,
+.activity-action--danger:focus-visible {
+  background: #fff0f0;
+  border-color: #ffb8b8;
+  color: #b91c1c;
+}
+
+.activity-action i {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+</style>

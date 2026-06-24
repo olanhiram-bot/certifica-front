@@ -44,6 +44,24 @@ const router = createRouter({
       },
     },
     {
+      path: '/recuperar-cuenta',
+      name: 'forgot-password',
+      component: () => import('@/views/ForgotPassword.vue'),
+      meta: {
+        title: 'Recuperar cuenta',
+        middleware: guest,
+      },
+    },
+    {
+      path: '/recuperar-cuenta/restablecer',
+      name: 'reset-password',
+      component: () => import('@/views/ResetPassword.vue'),
+      meta: {
+        title: 'Restablecer contrasena',
+        middleware: guest,
+      },
+    },
+    {
       path: '/registro',
       name: 'register',
       component: () => import('@/views/Register.vue'),

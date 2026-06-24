@@ -1,26 +1,19 @@
 <template>
   <div class="container_app">
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
-        <div class="row align-items-center g-4">
-          <div class="col-lg-8">
-            <span class="badge text-bg-primary mb-3">Inicio del proceso</span>
-            <h1 class="h3 mb-2">Bienvenido, {{ displayName }}</h1>
-            <p class="text-muted mb-0">
-              Revisa los lineamientos, elige una modalidad de capacitacion y comienza tu expediente.
-            </p>
-          </div>
-          <div class="col-lg-4">
-            <div class="progress-panel">
-              <i class="bi bi-list-check"></i>
-              <div>
-                <span>Estado</span>
-                <strong>{{ stampStore.hasStamp ? 'Expediente activo' : 'Sin expediente' }}</strong>
-              </div>
-            </div>
-          </div>
-        </div>
+    <section class="user-summary mb-4">
+      <div class="user-summary__avatar">{{ userInitials }}</div>
+      <div class="user-summary__identity">
+        <span class="user-summary__role">{{ userRole }}</span>
+        <strong>{{ userEmail }}</strong>
+        <span class="user-summary__area">
+          <i class="bi bi-building"></i>
+          Dependencia o area: {{ userArea }}
+        </span>
       </div>
+      <span class="user-summary__status">
+        <i class="bi bi-shield-check"></i>
+        {{ stampStore.hasStamp ? 'Expediente activo' : 'Sin expediente' }}
+      </span>
     </section>
 
     <section class="row g-4 mb-4">
@@ -134,6 +127,31 @@ const displayName = computed(() => {
   return String(providerInfo?.nombre_completo ?? raw?.name ?? authStore.user?.username ?? 'Usuario')
 })
 
+const userEmail = computed(() => {
+  const raw = authStore.user?.user as Record<string, unknown> | undefined
+  return String(raw?.email ?? authStore.user?.email ?? authStore.user?.username ?? displayName.value)
+})
+
+const userRole = computed(() => {
+  const raw = authStore.user?.user as Record<string, unknown> | undefined
+  return String(raw?.role ?? authStore.user?.role ?? 'Validador').toUpperCase()
+})
+
+const userArea = computed(() => {
+  const raw = authStore.user?.user as Record<string, unknown> | undefined
+  const providerInfo = raw?.provider_info as Record<string, unknown> | undefined
+  return String(providerInfo?.nombre_comercial ?? providerInfo?.rfc ?? '-')
+})
+
+const userInitials = computed(() => {
+  return displayName.value
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join('') || 'U'
+})
+
 const startStamp = async (modalityTypeId: number) => {
   creating.value = true
   try {
@@ -149,24 +167,85 @@ const startStamp = async (modalityTypeId: number) => {
 </script>
 
 <style scoped>
-.progress-panel {
+.user-summary {
   align-items: center;
-  background: linear-gradient(135deg, #2563eb, #0ea5e9);
+  background: linear-gradient(110deg, #234b78 0%, #1f5fc8 70%, #2f66de 100%);
   border-radius: 10px;
   color: #fff;
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  gap: 1.25rem;
+  min-height: 98px;
+  padding: 1.5rem 1.75rem;
 }
 
-.progress-panel i {
-  font-size: 2rem;
+.user-summary__avatar {
+  align-items: center;
+  background: rgb(255 255 255 / 14%);
+  border: 1px solid rgb(255 255 255 / 42%);
+  border-radius: 50%;
+  display: inline-flex;
+  flex: 0 0 48px;
+  font-size: 1.1rem;
+  font-weight: 800;
+  height: 48px;
+  justify-content: center;
+  width: 48px;
 }
 
-.progress-panel span {
+.user-summary__identity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.user-summary__identity strong {
+  font-size: 1.02rem;
+  overflow-wrap: anywhere;
+}
+
+.user-summary__role {
+  color: rgb(255 255 255 / 72%);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.user-summary__area {
+  align-items: center;
   color: rgb(255 255 255 / 78%);
-  display: block;
-  font-size: 0.9rem;
+  display: inline-flex;
+  font-size: 0.78rem;
+  gap: 0.35rem;
+  margin-top: 0.25rem;
+}
+
+.user-summary__status {
+  align-items: center;
+  background: rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+  gap: 0.35rem;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .user-summary {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+    padding: 1.25rem;
+  }
+
+  .user-summary__status {
+    margin-left: 60px;
+  }
 }
 </style>
-

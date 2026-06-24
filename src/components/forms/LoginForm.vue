@@ -8,6 +8,9 @@
     <div class="mb-3">
       <label for="password" class="form-label">Contrasena</label>
       <input id="password" v-model="form.password" type="password" class="form-control" autocomplete="current-password" required />
+      <div class="text-end mt-2">
+        <router-link class="small" to="/recuperar-cuenta">Olvidaste tu contrasena?</router-link>
+      </div>
     </div>
 
     <div v-if="error" class="alert alert-danger">{{ error }}</div>

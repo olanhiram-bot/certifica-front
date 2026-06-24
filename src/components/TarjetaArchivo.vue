@@ -4,7 +4,10 @@
   <div class="seccion_tarjetas">
     <div class="caja_tarjeta p-3 ">
       <div class=" col-12">
-        <div class="icono_seccion row-12">
+        <div v-if="imagen" class="archivo_imagen">
+          <img :src="imagen" :alt="titulo" loading="lazy" />
+        </div>
+        <div v-else class="icono_seccion row-12">
           <i class="bi bi-file-earmark-pdf fs-1 text-danger"></i>
         </div>
         <h4>{{ tituloCorto }}</h4>
@@ -106,6 +109,10 @@ const props = defineProps({
   nombreArchivo: {
     type: String,
     default: ''
+  },
+  imagen: {
+    type: String,
+    default: ''
   }
 })
 
@@ -155,5 +162,22 @@ const handleButtonClick = () => {
   height: 100%;
   box-sizing: border-box;
   min-width: 0;
+}
+
+.archivo_imagen {
+  aspect-ratio: 16 / 9;
+  background: #eef2f7;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+  width: 100%;
+}
+
+.archivo_imagen img {
+  display: block;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
 }
 </style>

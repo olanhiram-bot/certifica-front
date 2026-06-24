@@ -21,7 +21,7 @@ export const pestanasData: PestanaData[] = [
     contenido: {
       imagen: acredita,
       titulo: 'Etapa 2. Curso Introductorio:',
-      descripcion: 'Los participantes deben acceder y aprobar un curso, mismo que se llevará a cabo en modalidad digital y a distancia, titulado "Introducción a prácticas laborales con perspectiva de género y una vida libre de violencia contra las mujeres". La aprobación de este curso es un requisito para continuar con el proceso.'
+      descripcion: 'Los participantes deben acceder y aprobar un curso, mismo que se llevará a cabo en modalidad digital y a distancia, titulado "Introducción a procesos operativos y documentación de evidencias". La aprobación de este curso es un requisito para continuar con el proceso.'
     }
   },
   {

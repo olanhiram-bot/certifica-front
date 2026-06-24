@@ -1,123 +1,164 @@
 <template>
-  <div class="contenedor_general">
+  <div class="container_app">
     <Breadcrum />
 
-    <div v-if="loading" class="estado_pagina">Cargando expediente...</div>
-    <div v-else-if="error" class="estado_pagina estado_pagina--error">{{ error }}</div>
+    <div v-if="loading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando expediente...</span>
+      </div>
+    </div>
+    <div v-else-if="error" class="alert alert-danger shadow-sm" role="alert">
+      {{ error }}
+    </div>
 
     <template v-else-if="stamp">
-      <div class="cabecera_detalle">
-        <div class="cabecera_info">
-          <h4 class="titulo_seccion">Expediente #{{ stamp.id }}</h4>
+      <!-- Cabecera -->
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div class="d-flex align-items-center gap-3">
+          <h2 class="h4 mb-0 fw-bold text-dark">Expediente #{{ stamp.id }}</h2>
           <span
-            class="badge_estado"
+            class="badge px-3 py-2"
             :style="{
-              background: stamp.stamp_status?.color + '33',
+              backgroundColor: stamp.stamp_status?.color + '22',
               borderColor: stamp.stamp_status?.color,
-              color: '#000'
+              color: '#1f2937',
+              border: '1px solid'
             }"
           >
             {{ stamp.stamp_status?.name }}
           </span>
         </div>
-        <div class="cabecera_acciones">
-          <button class="btn btn-danger" @click="handleReject" :disabled="loadingAction">
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-danger px-4" @click="handleReject" :disabled="loadingAction">
             Rechazar
           </button>
-          <button class="btn btn-success" @click="handleApprove" :disabled="loadingAction">
+          <button class="btn btn-success px-4 text-white" @click="handleApprove" :disabled="loadingAction">
             Aprobar
           </button>
-          <button class="btn-regresar" @click="router.back()">
-            <span class="material-symbols-outlined">arrow_back</span>
+          <button class="btn btn-outline-secondary d-inline-flex align-items-center gap-2 px-3" @click="router.back()">
+            <i class="bi bi-arrow-left"></i>
             Regresar
           </button>
         </div>
       </div>
 
-      <div class="grid_detalle">
-        <div class="tarjeta_detalle elevacion_5">
-          <h6 class="tarjeta_titulo">Usuario</h6>
-          <div class="campo">
-            <span class="campo_label">Nombre</span>
-            <span class="campo_valor">{{ stamp.provider?.name ?? stamp.provider?.username ?? '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Usuario</span>
-            <span class="campo_valor">{{ stamp.provider?.username ?? '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">RFC</span>
-            <span class="campo_valor">{{ stamp.provider?.rfc ?? '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Correo</span>
-            <span class="campo_valor">{{ stamp.provider?.email ?? '—' }}</span>
+      <!-- Grid Detalle -->
+      <div class="row g-4 mb-4">
+        <!-- Usuario Card -->
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <h5 class="card-title text-primary fw-bold text-uppercase fs-6 mb-3 pb-2 border-bottom">Usuario</h5>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Nombre</span>
+                  <span class="fw-semibold text-dark">{{ stamp.provider?.name ?? stamp.provider?.username ?? '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Usuario</span>
+                  <span class="fw-semibold text-dark">{{ stamp.provider?.username ?? '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">RFC</span>
+                  <span class="fw-semibold text-dark">{{ stamp.provider?.rfc ?? '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent border-0">
+                  <span class="text-muted small">Correo</span>
+                  <span class="fw-semibold text-dark">{{ stamp.provider?.email ?? '—' }}</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        <div class="tarjeta_detalle elevacion_5">
-          <h6 class="tarjeta_titulo">Certificacion</h6>
-          <div class="campo">
-            <span class="campo_label">Folio</span>
-            <span class="campo_valor">{{ stamp.id }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Avance</span>
-            <span class="campo_valor">{{ stamp.percent }}%</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Fecha de creación</span>
-            <span class="campo_valor">{{ stamp.created_at ? new Date(stamp.created_at).toLocaleDateString('es-MX') : '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Vigencia inicio</span>
-            <span class="campo_valor">{{ stamp.vigency_start_date ? new Date(stamp.vigency_start_date).toLocaleDateString('es-MX') : '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Vigencia fin</span>
-            <span class="campo_valor">{{ stamp.vigency_end_date ? new Date(stamp.vigency_end_date).toLocaleDateString('es-MX') : '—' }}</span>
-          </div>
-          <div class="campo">
-            <span class="campo_label">Días restantes</span>
-            <span class="campo_valor">{{ stamp.remaining_days !== null ? stamp.remaining_days + ' días' : '—' }}</span>
+        <!-- Certificación Card -->
+        <div class="col-md-6">
+          <div class="card border-0 shadow-sm h-100">
+            <div class="card-body p-4">
+              <h5 class="card-title text-primary fw-bold text-uppercase fs-6 mb-3 pb-2 border-bottom">Certificación</h5>
+              <ul class="list-group list-group-flush">
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Folio</span>
+                  <span class="fw-semibold text-dark">{{ stamp.id }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Avance</span>
+                  <span class="fw-semibold text-primary fw-bold">{{ stamp.percent }}%</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Fecha de creación</span>
+                  <span class="fw-semibold text-dark">{{ stamp.created_at ? new Date(stamp.created_at).toLocaleDateString('es-MX') : '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Vigencia inicio</span>
+                  <span class="fw-semibold text-dark">{{ stamp.vigency_start_date ? new Date(stamp.vigency_start_date).toLocaleDateString('es-MX') : '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                  <span class="text-muted small">Vigencia fin</span>
+                  <span class="fw-semibold text-dark">{{ stamp.vigency_end_date ? new Date(stamp.vigency_end_date).toLocaleDateString('es-MX') : '—' }}</span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent border-0">
+                  <span class="text-muted small">Días restantes</span>
+                  <span class="fw-semibold text-dark">{{ stamp.remaining_days !== null ? stamp.remaining_days + ' días' : '—' }}</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="seccion_actividades">
-        <h5 class="titulo_seccion mt-4">Actividades</h5>
-        <div v-if="activitiesLoading" class="estado_pagina">Cargando actividades...</div>
-        <div v-else-if="activities.length === 0" class="estado_pagina">Sin actividades.</div>
-        <div v-else class="lista_actividades">
-          <div v-for="activity in activities" :key="activity.id" class="actividad_item elevacion_5">
-            <div class="actividad_header">
-              <span class="actividad_nombre">{{ activity.activity_name }}</span>
-              <span
-                class="actividad_estado"
-                :style="{ background: activity.status_hexadecimal + '33', borderColor: activity.status_hexadecimal, color: '#000' }"
-              >
-                {{ activity.status_name }}
-              </span>
-            </div>
-            <p class="actividad_descripcion">{{ activity.activity_description }}</p>
-            <div v-if="activity.file_url" class="actividad_archivo">
-              <span class="material-symbols-outlined">attach_file</span>
-              <a :href="activity.file_url" target="_blank">{{ activity.file_name }}</a>
-            </div>
-            <div class="actividad_acciones">
-              <button class="btn btn-outline-danger" @click="handleRejectActivity(activity.id)" :disabled="loadingAction">
-                Rechazar
-              </button>
-              <button class="btn btn-outline-success" @click="handleApproveActivity(activity.id)" :disabled="loadingAction">
-                Aprobar
-              </button>
+      <!-- Actividades -->
+      <section class="mt-4">
+        <h3 class="h4 mb-3 fw-bold text-dark">Actividades</h3>
+        <div v-if="activitiesLoading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando actividades...</span>
+          </div>
+        </div>
+        <div v-else-if="activities.length === 0" class="alert alert-light border shadow-sm text-center py-4" role="alert">
+          Sin actividades registradas.
+        </div>
+        <div v-else class="d-flex flex-column gap-3">
+          <div v-for="activity in activities" :key="activity.id" class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+              <div class="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-2 mb-3">
+                <h4 class="h5 mb-0 fw-bold text-dark">{{ activity.activity_name }}</h4>
+                <span
+                  class="badge px-3 py-2"
+                  :style="{
+                    backgroundColor: activity.status_hexadecimal + '22',
+                    borderColor: activity.status_hexadecimal,
+                    color: '#1f2937',
+                    border: '1px solid'
+                  }"
+                >
+                  {{ activity.status_name }}
+                </span>
+              </div>
+              <p class="text-muted mb-3">{{ activity.activity_description }}</p>
+              
+              <div v-if="activity.file_url" class="mb-3">
+                <a :href="activity.file_url" target="_blank" class="btn btn-sm btn-light border d-inline-flex align-items-center gap-2 text-decoration-none">
+                  <i class="bi bi-paperclip"></i>
+                  {{ activity.file_name || 'Ver archivo adjunto' }}
+                </a>
+              </div>
+
+              <div class="d-flex gap-2 justify-content-end border-top pt-3">
+                <button class="btn btn-sm btn-outline-danger px-3" @click="handleRejectActivity(activity.id)" :disabled="loadingAction">
+                  Rechazar
+                </button>
+                <button class="btn btn-sm btn-outline-success px-3" @click="handleApproveActivity(activity.id)" :disabled="loadingAction">
+                  Aprobar
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
     </template>
 
-    <!-- Modal Revisión Completa (Revisor) -->
+    <!-- Modal Revisión Completa -->
     <ModalRevisionCompleta ref="revisionCompletaModal" />
   </div>
 </template>
@@ -131,7 +172,7 @@ import Breadcrum from '@/components/Breadcrum.vue'
 import ModalRevisionCompleta from '@/components/ModalRevisionCompleta.vue'
 import { getStamp, type StampDetalle } from '@/api/stamps'
 import { useBreadcrumbStore } from '@/stores/breadcrumb'
-import { takeReviewerStamp, approveStamp, rejectStamp, approveStampActivity, rejectStampActivity, getStampActivities } from '@/api/validator'
+import { approveStamp, rejectStamp, approveStampActivity, rejectStampActivity, getStampActivities } from '@/api/validator'
 
 const route = useRoute()
 const router = useRouter()
@@ -164,7 +205,6 @@ onMounted(async () => {
       breadcrumbStore.setCustomLabel(route.params.id as string, stamp.value.provider.name ?? stamp.value.provider.username)
     }
   } catch (e) {
-    // 403: expediente tomado por otro revisor. El interceptor ya avisó; volver al panel.
     if (axios.isAxiosError(e) && e.response?.status === 403) {
       router.replace({ name: 'admin-dashboard' })
       return
@@ -241,76 +281,5 @@ const handleRejectActivity = async (activityId: number) => {
 </script>
 
 <style scoped>
-.estado_pagina { padding: 40px; text-align: center; color: #6c757d; }
-.estado_pagina--error { color: #e53e3e; }
-
-.cabecera_detalle {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-.cabecera_info { display: flex; align-items: center; gap: 14px; }
-.cabecera_acciones { display: flex; gap: 10px; }
-.titulo_seccion { font-size: 20px; font-weight: 700; color: #111827; margin: 0; }
-
-.badge_estado {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 600;
-  border: 2px solid;
-}
-
-.btn-regresar {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 2px solid orange;
-  color: orange;
-  border-radius: 6px;
-  padding: 8px 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-.btn-regresar .material-symbols-outlined { font-size: 18px; }
-
-.grid_detalle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.tarjeta_detalle {
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-}
-.tarjeta_titulo {
-  font-size: 14px;
-  font-weight: 700;
-  color: #f57c00;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 16px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #f5f5f5;
-}
-
-.campo { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f9f9f9; }
-.campo:last-child { border-bottom: none; }
-.campo_label { font-size: 13px; color: #6c757d; }
-.campo_valor { font-size: 13px; color: #111827; font-weight: 500; text-align: right; }
-
-.lista_actividades { display: flex; flex-direction: column; gap: 16px; margin-top: 16px; }
-.actividad_item { background: #fff; border-radius: 12px; padding: 20px; }
-.actividad_header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.actividad_nombre { font-weight: 600; color: #111827; }
-.actividad_estado { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; border: 2px solid; }
-.actividad_descripcion { color: #6c757d; font-size: 14px; margin: 0 0 12px; }
-.actividad_archivo { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
-.actividad_archivo a { color: orange; }
-.actividad_acciones { display: flex; gap: 10px; justify-content: flex-end; }
+/* No overrides needed since we're using standard Bootstrap classes */
 </style>

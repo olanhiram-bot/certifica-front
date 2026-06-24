@@ -38,4 +38,20 @@ const register = (
     password_confirmation: passwordConfirmation,
   })
 
-export { login, loginSSO, loginByEfirma, register }
+const forgotPassword = (email: string): Promise<AxiosResponse<{ message: string }>> =>
+  httpClient.post('/password/forgot', { email })
+
+const resetPassword = (
+  email: string,
+  token: string,
+  password: string,
+  passwordConfirmation: string,
+): Promise<AxiosResponse<{ message: string }>> =>
+  httpClient.post('/password/reset', {
+    email,
+    token,
+    password,
+    password_confirmation: passwordConfirmation,
+  })
+
+export { login, loginSSO, loginByEfirma, register, forgotPassword, resetPassword }

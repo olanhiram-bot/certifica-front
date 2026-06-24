@@ -1,34 +1,14 @@
 <template>
   <div class="container_app user-dashboard">
-    <section class="card border-0 shadow-sm mb-4">
-      <div class="card-body p-4">
-        <div class="row align-items-center g-4">
-          <div class="col-lg-8">
-            <span class="badge text-bg-primary mb-3">Espacio de trabajo</span>
-            <h1 class="h3 mb-2">Dashboard de usuario</h1>
-            <p class="text-muted mb-0">
-              Consulta el avance de tu expediente, revisa tus evidencias y continua con la
-              capacitacion.
-            </p>
-          </div>
-          <div class="col-lg-4">
-            <div class="progress-card">
-              <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="small text-muted">Avance general</span>
-                <strong>{{ stampStore.percent }}%</strong>
-              </div>
-              <div class="progress" role="progressbar" :aria-valuenow="stampStore.percent" aria-valuemin="0" aria-valuemax="100">
-                <div class="progress-bar" :style="{ width: `${stampStore.percent}%` }"></div>
-              </div>
-              <div class="d-flex justify-content-between align-items-center mt-3">
-                <span class="small text-muted">Modalidad</span>
-                <span class="fw-semibold text-end">{{ stampStore.modalityName }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    <!-- Banner de usuario con avatar, progreso y vigencia -->
+    <CajaDatos
+      :show-progress="true"
+      :progress-value="stampStore.percent"
+      :show-progress-text="true"
+      :show-modalidad="true"
+      :modality-name="stampStore.modalityName"
+      :vigencia-fin="stampStore.vigenciaFin ?? null"
+    />
 
     <section v-if="statusMessage" class="alert mb-4" :class="statusMessage.className">
       <h2 class="h5 mb-1">{{ statusMessage.title }}</h2>
@@ -174,6 +154,7 @@ import type { DashboardStatusActivity } from '@/interfaces/DashboardStatus'
 import type { DashboardStampActivity } from '@/interfaces/DashboardStampActivity'
 import { useLoadingStore } from '@/stores/loading'
 import { useStampStore } from '@/stores/stamp'
+import CajaDatos from '@/components/CajaDatos.vue'
 
 interface LinkPaginate {
   url: string | null
@@ -411,13 +392,6 @@ onMounted(async () => {
 <style scoped>
 .user-dashboard {
   padding-bottom: 2rem;
-}
-
-.progress-card {
-  background: #f8fafc;
-  border: 1px solid #d9dee8;
-  border-radius: 8px;
-  padding: 1rem;
 }
 
 .dashboard-number {

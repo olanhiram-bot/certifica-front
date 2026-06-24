@@ -1,5 +1,5 @@
 <template>
-  <div class="contenedor_general">
+  <div class="container_app user-dashboard">
     <BreadcrumVue />
 
     <!-- Skeleton mientras cargan los datos de la cabecera -->

@@ -1,642 +1,532 @@
 <template>
-  <div class="contenedor_general">
-    <BreadcrumVue />
-    <CajaTituloBannerVue :data="isAdmin ? cajaRevisionExpedienteData : cajaModulosData" />
-    <CajaDatosVue :show-header-info="isAdmin" :show-progress="true" :show-progress-text="false"
-      :progress-value="stampStore.percentModuls" :progress-label="`${stampStore.percentModuls}%`"
-      :vigencia-fin="stampStore.vigenciaFin" :modality-name="stampStore.modalityName" />
-
-    <template v-if="!isAdmin || activeTab === 'programa'">
-      <br>
-      <div class="d-flex justify-content-end gap-3">
-        <FilterDropdownVue selectId="selector" :options="moduleOptions" v-model="selectedModule"
-          @on-change="handleFilter" />
-        <SearchVue size="sm" placeholder="¿Qué estas buscando?" @on-search="handleSearch" />
-      </div>
-      <PestanasSimplesVue v-if="isAdmin" :tabs="[
-        { id: 'programa', label: 'Programa de formación' },
-        { id: 'evaluacion', label: 'Evaluación documental' }
-      ]" v-model="activeTab" @on-change="handleTabChange" />
-      <br>
-      <div class="modulos-list">
-        <div v-if="loadingSections" class="modulos-loading">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Cargando módulos...</span>
+  <div class="container_app user-dashboard modules-page">
+    <section class="modules-hero mb-4">
+      <div>
+        <div class="row align-items-center g-4">
+          <div class="col-lg-8">
+            <span class="modules-hero__badge">Programa de formación</span>
+            <h1 class="h3 mb-2">Módulos de capacitación</h1>
+            <p class="mb-0">
+              Revisa el material de cada actividad y carga tus evidencias para avanzar en tu expediente.
+            </p>
           </div>
-          <p class="modulos-loading-text">Cargando módulos...</p>
-        </div>
-        <div v-else-if="filteredSections.length === 0 && !loadingSections" class="text-muted">
-          No se encontraron módulos.
-        </div>
-        <template v-else>
-        <div v-for="section in filteredSections" :key="section.id" class="mb-4">
-          <h2>{{ section.name }}</h2>
-          <p v-if="getModuleDescription(section.id)" class="modulo_descripcion">
-            {{ getModuleDescription(section.id) }}
-          </p>
-          <AlertaVue v-if="!isAdmin && stampStore.modalityTypeId === 2" tipo="warning" :mostrar-cerrar="false" :data="{
-            titulo: 'Subir evidencias',
-            descripcion: 'Para acreditar satisfactoriamente la capacitación, deberán cargarse las evidencias correspondientes a cada módulo. Aunque solo se solicita un archivo por cada uno, este mismo deberá adjuntarse en todas las lecciones que lo integran.'
-          }" />
-          <div class="seccion_tarjetas_responsive">
-            <div v-for="activity in section.activities" :key="activity.id" class="tarjeta_item"
-              v-tooltip:top="!isAdmin && stampStore.isExpired ? 'La vigencia del expediente ha vencido (0 días restantes). No es posible subir evidencias ni visualizar el material de apoyo.' : ''">
-              <!-- Revisor: muestra botón "Revisar evidencia" solo si hay archivo subido -->
-              <ActivityVue v-if="isAdmin"
-                :title="activity.name"
-                :image="activity.image_url"
-                :status="getActivityStatusObj(activity)"
-                :is-validate="hasEvidence(activity)"
-                @click-validate="openUploadModal(activity)"
-              />
-              <!-- Usuario: muestra botones de subir evidencia y ver material -->
-              <ActivityVue v-else
-                :title="activity.name"
-                :image="activity.image_url"
-                :status="getActivityStatusObj(activity)"
-                :is-evidence="stampStore.modalityTypeId === 2 || hasViewedMaterial(activity)"
-                :disabled-evidence="isUploadDisabled(activity)"
-                :evidence-label="'Subir evidencia'"
-                :evidence-icon="'upload'"
-                :is-support-material="!!activity.url_content && stampStore.modalityTypeId !== 2"
-                :disabled-support-material="!canViewMaterial(activity)"
-                @click-evidence="openUploadModal(activity)"
-                @click-support-material="goToActivity(activity, section.id)"
-              />
+          <div class="col-lg-4">
+            <div class="modules-hero__panel">
+              <div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="small">Avance en módulos</span>
+                  <strong>{{ stampStore.percentModuls }}%</strong>
+                </div>
+                <div class="modules-hero__progress" role="progressbar" :aria-valuenow="stampStore.percentModuls" aria-valuemin="0" aria-valuemax="100">
+                  <div :style="{ width: `${stampStore.percentModuls}%` }"></div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <span class="small">Vigencia</span>
+                  <span class="fw-semibold">{{ stampStore.vigenciaFin ?? 'Por definir' }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        </template>
       </div>
-    </template>
+    </section>
 
-    <template v-else-if="activeTab === 'evaluacion'">
-      <div class="mt-4">
-        <p class="text-muted">Vista de Evaluación documental</p>
+    <section class="card border-0 shadow-sm mb-4">
+      <div class="card-body p-4">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-3">
+          <div>
+            <h2 class="h5 mb-1">Catálogo de módulos</h2>
+            <p class="text-muted mb-0">Filtra por módulo o busca una actividad específica.</p>
+          </div>
+          <div class="d-flex flex-column flex-sm-row gap-2 module-toolbar">
+            <select v-model="selectedModule" class="form-select" aria-label="Filtrar por módulo">
+              <option value="">Todos los módulos</option>
+              <option v-for="section in sortedSections" :key="section.id" :value="section.id">
+                {{ section.name }}
+              </option>
+            </select>
+            <div class="input-group">
+              <input v-model="searchTerm" class="form-control" type="search" placeholder="Buscar actividad" />
+              <button class="btn btn-outline-secondary" type="button" @click="clearSearch" aria-label="Limpiar búsqueda">
+                <i class="bi bi-x-lg"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-    </template>
+    </section>
 
-    <!-- Modal Subir Evidencia -->
-    <Modal ref="uploadModal" modalId="uploadEvidenceModal" title="Subir Evidencia" size="lg"
-      :buttons="uploadModalButtons">
-      <template #body>
-        <label class="form-label" for="inputGroupFile">Sube un archivo adjunto</label>
-        <div class="input-group">
-          <input ref="fileInput" type="file" class="form-control" :class="{ 'is-invalid': fileError }"
-            id="inputGroupFile" accept="application/pdf" @change="handleFileSelect">
-          <label class="input-group-text" for="inputGroupFile" title="Subir archivo">
-            <i class="bi bi-cloud-upload"></i>
-          </label>
+    <section v-if="stampStore.isExpired" class="alert alert-danger">
+      <h2 class="h5 mb-1">Expediente fuera de vigencia</h2>
+      <p class="mb-0">Puedes consultar tu avance, pero ya no se aceptan nuevas cargas de evidencia.</p>
+    </section>
+
+    <section v-if="loading" class="card border-0 shadow-sm">
+      <div class="card-body p-5 text-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Cargando módulos...</span>
         </div>
-        <div v-if="fileError" class="invalid-feedback d-block">{{ fileError }}</div>
-        <div v-else-if="selectedFile" class="mt-2">
-          <small class="text-muted">Archivo seleccionado: {{ selectedFile.name }}</small>
+        <p class="text-muted mt-3 mb-0">Cargando módulos...</p>
+      </div>
+    </section>
+
+    <section v-else-if="filteredSections.length === 0" class="card border-0 shadow-sm">
+      <div class="card-body p-5 text-center">
+        <i class="bi bi-journal-x fs-1 text-muted"></i>
+        <h2 class="h5 mt-3">No se encontraron módulos</h2>
+        <p class="text-muted mb-0">Prueba con otro filtro o limpia la búsqueda.</p>
+      </div>
+    </section>
+
+    <section v-else class="d-grid gap-4">
+      <article v-for="section in filteredSections" :key="section.id" class="module-section">
+        <div class="d-flex flex-column flex-lg-row justify-content-between gap-2 mb-3">
+          <div>
+            <h2 class="h4 mb-1">{{ section.name }}</h2>
+            <p class="text-muted mb-0">{{ moduleDescription(section) }}</p>
+          </div>
+          <span class="badge text-bg-light align-self-lg-start">
+            {{ section.activities.length }} actividades
+          </span>
         </div>
-      </template>
-    </Modal>
 
-    <!-- Modal Evidencia Completa -->
-    <ModalEvidenciaCompleta ref="evidenciaCompletaModal" />
+        <div class="row g-3">
+          <div v-for="activity in section.activities" :key="activity.id" class="col-md-6 col-xl-4">
+            <div class="card h-100 border-0 shadow-sm activity-card">
+              <div class="activity-media">
+                <img :src="activityImage(activity)" :alt="activity.name" loading="lazy" @error="handleImageError" />
+              </div>
+              <div class="card-body d-flex flex-column p-4">
+                <div class="d-flex justify-content-between gap-2 mb-3">
+                  <span class="status-badge" :style="statusStyle(activity)">
+                    {{ activityStatus(activity).name }}
+                  </span>
+                  <span v-if="hasEvidence(activity)" class="badge text-bg-success">Evidencia cargada</span>
+                </div>
 
-    <TarjetaHorizontal2Vue v-if="stampStore.percentModuls >= 100 && !isAdmin" :data="{
-      titulo: 'Has finalizado la carga de evidencias del Contenido del programa de formación',
-      descripcion: 'Tus evidencias han sido registradas correctamente. Ahora puedes continuar con la siguiente Etapa 4: Evaluación documental.',
-      boton: 'Continuar con Evaluación documental',
-      imagen: '/src/assets/tarjeta2.png'
-    }" @click="router.push({ name: 'usuario-protocolos' })" />
+                <h3 class="h5 mb-2">{{ activity.name }}</h3>
+                <p class="text-muted small flex-grow-1">
+                  {{ activity.description || 'Revisa el material de apoyo y carga la evidencia correspondiente.' }}
+                </p>
+
+                <div v-if="selectedActivityId === activity.id" class="upload-box mb-3">
+                  <label class="form-label small fw-semibold" :for="`file-${activity.id}`">Archivo PDF</label>
+                  <input
+                    :id="`file-${activity.id}`"
+                    class="form-control form-control-sm"
+                    type="file"
+                    accept="application/pdf"
+                    @change="handleFileSelect"
+                  />
+                  <div v-if="fileError" class="text-danger small mt-2">{{ fileError }}</div>
+                  <div v-else-if="selectedFile" class="text-muted small mt-2">{{ selectedFile.name }}</div>
+                </div>
+
+                <div class="d-grid gap-2">
+                  <button
+                    class="btn btn-outline-primary"
+                    type="button"
+                    :disabled="!activity.url_content && !activity.file_url_content"
+                    @click="goToMaterial(activity, section.id)"
+                  >
+                    <i class="bi bi-book me-2"></i>
+                    Ver material
+                  </button>
+
+                  <button
+                    v-if="hasEvidence(activity)"
+                    class="btn btn-primary"
+                    type="button"
+                    @click="openEvidence(activity)"
+                  >
+                    <i class="bi bi-eye me-2"></i>
+                    Ver evidencia
+                  </button>
+
+                  <button
+                    v-else-if="selectedActivityId !== activity.id"
+                    class="btn btn-primary"
+                    type="button"
+                    :disabled="!canUpload(activity)"
+                    @click="startUpload(activity)"
+                  >
+                    <i class="bi bi-cloud-upload me-2"></i>
+                    Subir evidencia
+                  </button>
+
+                  <div v-else class="d-grid gap-2">
+                    <button class="btn btn-primary" type="button" :disabled="uploading" @click="submitEvidence(activity)">
+                      {{ uploading ? 'Subiendo...' : 'Confirmar carga' }}
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" :disabled="uploading" @click="cancelUpload">
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section v-if="stampStore.percentModuls >= 100" class="card border-0 shadow-sm mt-4">
+      <div class="card-body p-4 d-flex flex-column flex-lg-row align-items-lg-center justify-content-between gap-3">
+        <div>
+          <h2 class="h5 mb-1">Módulos completados</h2>
+          <p class="text-muted mb-0">Continúa con la evaluación documental para completar tu expediente.</p>
+        </div>
+        <button class="btn btn-primary" type="button" @click="router.push({ name: 'usuario-protocolos' })">
+          Continuar a documentos
+        </button>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup lang="ts">
-import { addFileToStampActivity } from '@/api/stamp'
-import BreadcrumVue from '@/components/Breadcrum.vue'
-import CajaDatosVue from '@/components/CajaDatos.vue'
-import CajaTituloBannerVue from '@/components/CajaTituloBanner.vue'
-import FilterDropdownVue from '@/components/FilterDropdown.vue'
-import Modal from '@/components/Modal.vue'
-import ModalEvidenciaCompleta from '@/components/ModalEvidenciaCompleta.vue'
-import PestanasSimplesVue from '@/components/PestanasSimples.vue'
-import SearchVue from '@/components/Search.vue'
-import ActivityVue from '@/components/Activity.vue'
-import AlertaVue from '@/components/Alerta.vue'
-import TarjetaHorizontal2Vue from '@/components/TarjetaHorizontal2.vue'
-import { cajaModulosData, cajaRevisionExpedienteData } from '@/data/cajaLineamientosData'
-import type { ActivityResource, SectionResource } from '@/interfaces/Section'
-import { AuthMethod } from '@/enums/AuthMethod'
-import { useAuthStore } from '@/stores/auth'
-import { useBreadcrumbStore } from '@/stores/breadcrumb'
-import { useLoadingStore } from '@/stores/loading'
-import { useSectionsStore } from '@/stores/sections'
-import { useStampStore } from '@/stores/stamp'
-import { computed, nextTick, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useToast } from 'vue-toast-notification'
-import axios from 'axios'
+import { addFileToStampActivity } from '@/api/stamp'
+import { getSections } from '@/api/sections'
+import type { ActivityResource, SectionResource } from '@/interfaces/Section'
+import { useLoadingStore } from '@/stores/loading'
+import { useStampStore } from '@/stores/stamp'
 
 const route = useRoute()
 const router = useRouter()
-const stampStore = useStampStore()
+const toast = useToast()
 const loadingStore = useLoadingStore()
-const authStore = useAuthStore()
-const breadcrumbStore = useBreadcrumbStore()
-const sectionsStore = useSectionsStore()
-const $toast = useToast()
+const stampStore = useStampStore()
 
-const isAdmin = computed(() => authStore.user?.auth_method_id === AuthMethod.ADMIN)
-const activeTab = computed(() => route.name === 'admin-modulos' ? 'programa' : 'evaluacion')
-
-const handleTabChange = (tabId: string) => {
-  if (tabId === 'evaluacion') {
-    router.push({ name: 'admin-protocolos', query: route.query })
-  }
-}
-
-const sections = computed(() => sectionsStore.sections)
-const loadingSections = computed(() => sectionsStore.loading)
+const sections = ref<SectionResource[]>([])
+const loading = ref(false)
 const searchTerm = ref('')
 const selectedModule = ref<number | string>('')
-
-const uploadModal = ref<InstanceType<typeof Modal> | null>(null)
-const evidenciaCompletaModal = ref<InstanceType<typeof ModalEvidenciaCompleta> | null>(null)
 const selectedActivityId = ref<number | null>(null)
 const selectedFile = ref<File | null>(null)
-const fileError = ref<string | null>(null)
-const loadingUpload = ref(false)
-const fileInput = ref<HTMLInputElement | null>(null)
-
-// Obtiene el stamp_activity correspondiente al certificacion actual para una actividad
-const currentStampActivity = (activity: ActivityResource) => {
-  return activity.stamp_activity ?? null
-}
-
-// Estado de la actividad para mostrar en badge
-const getActivityStatusObj = (activity: ActivityResource) => {
-  const sa = currentStampActivity(activity)
-  if (!sa?.status?.name) return { name: 'Sin iniciar', color: '#bdbdbd' }
-  return { name: sa.status.name, color: sa.status.hexadecimal ?? '' }
-}
-
-// El revisor siempre ve el botón "Revisar evidencia"
-const hasEvidence = (_activity: ActivityResource): boolean => {
-  return true
-}
-
-// ¿El usuario ya vio el material de apoyo?
-const hasViewedMaterial = (activity: ActivityResource): boolean => {
-  return currentStampActivity(activity)?.material_was_view === true
-}
-
-// ¿Se puede ver el material de apoyo? Siempre habilitado cuando existe contenido
-const canViewMaterial = (activity: ActivityResource): boolean => {
-  if (stampStore.isRechazado && isActivityApproved(activity)) return false
-  return !!activity.url_content
-}
-
-// ¿La actividad ya fue aprobada?
-const isActivityApproved = (activity: ActivityResource): boolean => {
-  const sa = currentStampActivity(activity)
-  if (!sa) return false
-  return sa.stamp_activity_status_id === 6 || sa.status?.name?.trim().toLowerCase() === 'aprobado'
-}
-
-// ¿Está deshabilitado el botón "Subir evidencia"?
-// - Modalidad 2: siempre habilitado (modality_type_id siempre está en el store)
-// - Modalidad 1: el botón sólo se muestra cuando material_was_view = true (ver :is-evidence)
-// - Cuando la certificacion está "Rechazado", las actividades aprobadas quedan bloqueadas
-const isUploadDisabled = (activity: ActivityResource): boolean => {
-  if (stampStore.isRechazado && isActivityApproved(activity)) return true
-  if (stampStore.modalityTypeId === 2) return false
-  if (!stampStore.isEditable) return true
-  if (stampStore.isExpired) return true
-  return false
-}
-
-const moduleOptions = computed(() => {
-  return sortedSections.value.map(section => ({
-    label: section.name,
-    value: section.id
-  }))
-})
+const fileError = ref('')
+const uploading = ref(false)
 
 const sortedSections = computed(() => {
-  return [...sections.value].sort((a, b) => {
-    const numA = parseInt(a.name.replace(/\D/g, '')) || 0
-    const numB = parseInt(b.name.replace(/\D/g, '')) || 0
-    return numA - numB
-  })
+  return [...sections.value].sort((a, b) => sectionNumber(a.name) - sectionNumber(b.name))
 })
 
 const filteredSections = computed(() => {
-  let result = sortedSections.value
+  const term = searchTerm.value.trim().toLowerCase()
 
-  if (selectedModule.value) {
-    result = result.filter(section => section.id === selectedModule.value)
-  }
-
-  if (searchTerm.value.trim()) {
-    const term = searchTerm.value.toLowerCase()
-    result = result
-      .map(section => ({
-        ...section,
-        activities: section.activities.filter(activity =>
-          activity.name.toLowerCase().includes(term)
-        )
-      }))
-      .filter(section => section.activities.length > 0)
-  }
-
-  return result
+  return sortedSections.value
+    .filter((section) => !selectedModule.value || section.id === Number(selectedModule.value))
+    .map((section) => ({
+      ...section,
+      activities: section.activities.filter((activity) => {
+        if (!term) return true
+        return `${activity.name} ${activity.description ?? ''}`.toLowerCase().includes(term)
+      }),
+    }))
+    .filter((section) => section.activities.length > 0)
 })
 
-const getModuleDescription = (sectionId: number): string => {
-  if (sectionId === 1) {
-    return 'En este módulo contarás con material de consulta adicional a tu disposición. Una vez que hayas revisado las guías, podrás cargar tus evidencias de aprendizaje.'
-  }
-
-  if (sectionId === 2) {
-    return 'Comprende la violencia de género desde sus raices hasta sus manifestaciones. En este módulo contarás con material de consulta adicional a tu disposición. Al finalizar, podrás cargar tus evidencias de aprendizaje.'
-  }
-
-  if (sectionId === 3) {
-    return 'Desarrolla las habilidades necesarias para atender casos de acoso y hostigamiento de forma efectiva y sin victimizar. En este módulo contarás con material de consulta.'
-  }
-
-  if (sectionId === 4) {
-    return 'Explora el papel de las masculinidades en la construcción de entornos más igualitarios. En este módulo contarás con material de consulta adicional a tu disposición. Al finalizar, podrás cargar tus evidencias de aprendizaje'
-  }
-  return ''
+const sectionNumber = (name: string) => {
+  return Number(name.match(/\d+/)?.[0] ?? 0)
 }
 
-const openUploadModal = (activity: ActivityResource) => {
-  if (!stampStore.currentStamp?.id) return
+const moduleDescription = (section: SectionResource) => {
+  const descriptions: Record<number, string> = {
+    1: 'Material introductorio para conocer los criterios de la certificación y preparar las primeras evidencias.',
+    2: 'Actividades enfocadas en diagnóstico, prevención y atención dentro del entorno laboral.',
+    3: 'Herramientas para documentar prácticas internas y fortalecer procesos de atención.',
+    4: 'Cierre del programa de formación y preparación para la evaluación documental.',
+  }
 
-  if (isAdmin.value) {
-    const sa = currentStampActivity(activity)
-    if (sa) {
-      router.push({ name: 'admin-curso-evidencia', params: { id: sa.id }, query: { ...route.query, from: 'modulos' } })
+  return descriptions[section.id] ?? 'Revisa las actividades y carga la evidencia solicitada para este módulo.'
+}
+
+const activityStatus = (activity: ActivityResource) => {
+  const status = activity.stamp_activity?.status
+  return {
+    name: status?.name ?? 'Sin iniciar',
+    color: status?.hexadecimal ?? '#6c757d',
+  }
+}
+
+const statusStyle = (activity: ActivityResource) => {
+  const status = activityStatus(activity)
+  return {
+    backgroundColor: `${status.color}22`,
+    borderColor: status.color,
+    color: '#1f2937',
+  }
+}
+
+const hasEvidence = (activity: ActivityResource) => {
+  return Boolean(activity.stamp_activity?.file_url)
+}
+
+const isActivityApproved = (activity: ActivityResource) => {
+  const statusName = activity.stamp_activity?.status?.name?.trim().toLowerCase()
+  return activity.stamp_activity?.stamp_activity_status_id === 6 || statusName === 'aprobado'
+}
+
+const canUpload = (activity: ActivityResource) => {
+  if (!stampStore.currentStamp) return false
+  if (!stampStore.isEditable || stampStore.isExpired) return false
+  if (stampStore.isRechazado && isActivityApproved(activity)) return false
+  return true
+}
+
+const activityImage = (activity: ActivityResource) => {
+  const image = activity.image_url || activity.file_url
+  if (!image) return '/src/assets/images/standard/card.jpg'
+  if (/^https?:\/\//.test(image)) return image
+  if (image.startsWith('/storage/')) return `${import.meta.env.VITE_STORAGE_URL}${image}`
+  if (image.startsWith('/')) return image
+  return `${import.meta.env.VITE_STORAGE_URL}/storage/${image}`
+}
+
+const handleImageError = (event: Event) => {
+  const img = event.target as HTMLImageElement
+  img.classList.add('error')
+  img.src = '/src/assets/images/standard/card.jpg'
+}
+
+const loadSections = async () => {
+  loading.value = true
+  try {
+    if (!stampStore.currentStamp) {
+      await stampStore.fetchCurrentStamp()
     }
-    return
+
+    if (!stampStore.currentStamp?.id) {
+      toast.warning('Primero crea tu expediente para consultar los módulos.')
+      router.push({ name: 'usuario-instrucciones' })
+      return
+    }
+
+    const response = await getSections(1, stampStore.currentStamp.id)
+    sections.value = response.data.data ?? []
+  } catch {
+    sections.value = []
+    toast.error('No fue posible cargar los módulos.')
+  } finally {
+    loading.value = false
   }
+}
 
-  const existingStampActivity = currentStampActivity(activity)
+const goToMaterial = async (activity: ActivityResource, sectionId: number) => {
+  if (!activity.url_content && !activity.file_url_content) return
 
-  if (!isAdmin.value && stampStore.isRechazado && isActivityApproved(activity)) {
-    $toast.warning('Esta actividad ya fue aprobada y no puede ser modificada.')
-    return
-  }
+  loadingStore.setLoading('Abriendo material...')
+  try {
+    if (!activity.stamp_activity && stampStore.currentStamp?.id) {
+      await stampStore.addActivityToStamp(activity.id)
+    }
 
-  if (existingStampActivity?.file_url) {
     router.push({
-      name: 'usuario-curso-evidencia',
-      params: { id: existingStampActivity.id }
+      name: 'usuario-modulo-curso',
+      params: { id: activity.id },
+      query: { sectionId: String(sectionId) },
     })
-    return
+  } catch {
+    toast.error('No fue posible abrir el material.')
+  } finally {
+    loadingStore.clearLoading()
   }
+}
 
-  if (!isAdmin.value && stampStore.modalityTypeId !== 2) {
-    if (stampStore.isExpired) {
-      $toast.warning('El expediente está fuera de vigencia. No se aceptan nuevas cargas.')
-      return
-    }
-    if (!stampStore.isEditable) {
-      $toast.warning('El expediente se encuentra en revisión y no puede ser modificado.')
-      return
-    }
-  }
+const openEvidence = (activity: ActivityResource) => {
+  const stampActivityId = activity.stamp_activity?.id
+  if (!stampActivityId) return
+  router.push({ name: 'usuario-curso-evidencia', params: { id: stampActivityId } })
+}
 
+const startUpload = (activity: ActivityResource) => {
   selectedActivityId.value = activity.id
   selectedFile.value = null
-  fileError.value = null
-  uploadModal.value?.showModal()
+  fileError.value = ''
 }
 
-const validateFile = (file: File | null): string | null => {
-  if (!file) return 'El archivo es requerido'
-  if (file.type !== 'application/pdf') return 'Solo se permiten archivos en formato PDF'
-  const maxSizeMb = Number(import.meta.env.VITE_MAX_FILE_SIZE_MB) || 10
-  if (file.size > maxSizeMb * 1024 * 1024) return `El archivo no debe superar los ${maxSizeMb} MB`
-  return null
+const cancelUpload = () => {
+  selectedActivityId.value = null
+  selectedFile.value = null
+  fileError.value = ''
 }
 
 const handleFileSelect = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  if (target.files && target.files[0]) {
-    const file = target.files[0]
-    const error = validateFile(file)
-    if (error) {
-      fileError.value = error
-      target.value = ''
-      selectedFile.value = null
-    } else {
-      fileError.value = null
-      selectedFile.value = file
-    }
-  } else {
-    selectedFile.value = null
-    fileError.value = null
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  selectedFile.value = null
+  fileError.value = ''
+
+  if (!file) return
+
+  if (file.type !== 'application/pdf') {
+    fileError.value = 'Solo se aceptan archivos PDF.'
+    input.value = ''
+    return
   }
+
+  if (file.size > 10 * 1024 * 1024) {
+    fileError.value = 'El archivo no debe superar 10 MB.'
+    input.value = ''
+    return
+  }
+
+  selectedFile.value = file
 }
 
-const handleUpload = async () => {
-  const error = validateFile(selectedFile.value)
-  if (error) {
-    fileError.value = error
+const submitEvidence = async (activity: ActivityResource) => {
+  if (!selectedFile.value) {
+    fileError.value = 'Selecciona un archivo PDF.'
     return
   }
 
-  if (!selectedActivityId.value || !stampStore.currentStamp) {
-    $toast.error('Error al subir la evidencia')
+  if (!canUpload(activity)) {
+    toast.warning('Esta actividad no permite nuevas cargas.')
     return
   }
 
-  if (stampStore.isExpired) {
-    $toast.warning('El expediente está fuera de vigencia. No se aceptan nuevas cargas.')
-    return
-  }
-
-  loadingUpload.value = true
+  uploading.value = true
   try {
-    const stampActivity = await stampStore.addActivityToStamp(selectedActivityId.value)
-    if (stampActivity?.id) {
-      const response = await addFileToStampActivity(stampActivity.id, selectedFile.value!)
+    const stampActivity = activity.stamp_activity ?? await stampStore.addActivityToStamp(activity.id)
+    if (!stampActivity?.id) throw new Error('No stamp activity')
 
-      const meta = response.data.meta
-      uploadModal.value?.hideModal()
+    const response = await addFileToStampActivity(stampActivity.id, selectedFile.value)
+    const message = response.data.meta?.message ?? 'Evidencia cargada correctamente.'
+    toast.success(message)
 
-      if (meta?.evidence_complete) {
-        evidenciaCompletaModal.value?.showModal()
-      } else if (meta?.message) {
-        $toast.success(meta.message)
-      } else {
-        $toast.success('Evidencia subida correctamente')
-      }
-      selectedFile.value = null
-      fileError.value = null
-      if (fileInput.value) fileInput.value.value = ''
-      await stampStore.fetchCurrentStamp()
-      router.push({ name: 'usuario-curso-evidencia', params: { id: stampActivity.id } })
-    }
-  } catch (error) {
-    $toast.error('Error al subir la evidencia')
-    console.error(error)
-  } finally {
-    loadingUpload.value = false
-  }
-}
-
-const uploadModalButtons = computed(() => [
-  { text: 'Cancelar', variant: 'secundario' as const, dismiss: true, action: () => { } },
-  { text: 'Subir', variant: 'primario' as const, action: handleUpload, loading: loadingUpload.value, disabled: !selectedFile.value || !!fileError.value || loadingUpload.value }
-])
-
-const handleSearch = (term: string) => {
-  searchTerm.value = term
-}
-
-const handleFilter = (moduleId: number | string) => {
-  selectedModule.value = moduleId
-}
-
-const goToActivity = async (activity: ActivityResource, sectionId: number) => {
-  const sa = currentStampActivity(activity)
-
-  loadingStore.setLoading('Iniciando actividad...')
-  try {
-    if (!sa) {
-      await stampStore.addActivityToStamp(activity.id)
-    }
-    router.push({
-      name: isAdmin.value ? 'admin-modulo-curso' : 'usuario-modulo-curso',
-      params: { id: activity.id },
-      query: { sectionId: sectionId.toString() }
-    })
+    cancelUpload()
+    await stampStore.fetchCurrentStamp()
+    await loadSections()
+    router.push({ name: 'usuario-curso-evidencia', params: { id: stampActivity.id } })
   } catch {
-    $toast.error('Error al iniciar la actividad. Intenta de nuevo.')
+    toast.error('No fue posible subir la evidencia.')
   } finally {
-    loadingStore.clearLoading()
+    uploading.value = false
   }
 }
 
-const fetchSections = async (stampId?: number) => {
-  await sectionsStore.fetchSections(1, stampId)
+const clearSearch = () => {
+  searchTerm.value = ''
 }
 
-const fetchStampById = async (stampId: number) => {
-  const { getStamp } = await import('@/api/validator')
-  const stampRes = await getStamp(stampId)
-  const stampData = stampRes.data.data
-  stampStore.setCurrentProvider(stampData.provider ?? null)
-  stampStore.currentStamp = {
-    id: stampData.id,
-    is_active: stampData.is_active,
-    percent: stampData.percent,
-    percent_moduls: stampData.percent_moduls,
-    percent_evaluations: stampData.percent_evaluations,
-    stamp_status_id: stampData.stamp_status_id,
-    stamp_status: stampData.stamp_status,
-    vigency_start_date: stampData.vigency_start_date,
-    vigency_end_date: stampData.vigency_end_date,
-    provider_id: stampData.provider?.id ?? stampData.provider_id,
-    reviewer_id: stampData.reviewer_id,
-    modality_type_id: stampData.modality_type_id,
-    created_at: stampData.created_at,
-    updated_at: stampData.updated_at,
-    created_by: null,
-    updated_by: null,
-    deleted_by: null,
-    deleted_at: null,
-    deleted_reason: null
-  }
-}
+watch(() => route.query.moduleId, (moduleId) => {
+  selectedModule.value = moduleId ? Number(moduleId) : ''
+}, { immediate: true })
 
-onMounted(async () => {
-  const moduleId = route.query.moduleId
-  if (moduleId) {
-    selectedModule.value = Number(moduleId)
-  }
-  loadingStore.setLoading('Cargando módulos...')
-  try {
-    if (isAdmin.value && route.query.stampId) {
-      const stampId = Number(route.query.stampId)
-      try {
-        await fetchStampById(stampId)
-      } catch (e) {
-        // 403: el expediente ya fue tomado por otro revisor. El interceptor ya
-        // mostró el mensaje; devolvemos al admin al panel para no dejarlo en una vista vacía.
-        if (axios.isAxiosError(e) && e.response?.status === 403) {
-          router.replace({ name: 'admin-dashboard' })
-          return
-        }
-        throw e
-      }
-      // Persistir el stampId para que el breadcrumb y sidebar puedan usarlo
-      // incluso cuando la ruta activa no tiene el query param (ej: validador-curso-evidencia)
-      breadcrumbStore.setValidatorStampId(stampId)
-    } else {
-      if (!stampStore.currentStamp || !stampStore.loaded) {
-        await stampStore.fetchCurrentStamp()
-      }
-    }
-    const stampIdParam = isAdmin.value && route.query.stampId ? Number(route.query.stampId) : undefined
-    await fetchSections(stampIdParam)
-  } finally {
-    loadingStore.clearLoading()
-  }
-
-  if (route.query.scrollToBottom === '1') {
-    await nextTick()
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
-  }
-})
-
-watch(() => route.query.moduleId, (newModuleId) => {
-  if (newModuleId) {
-    selectedModule.value = Number(newModuleId)
-  } else {
-    selectedModule.value = ''
-  }
-})
-
-defineExpose({
-  sections: sortedSections
-})
+onMounted(loadSections)
 </script>
 
 <style scoped>
-:deep(.seccion_alerta) {
-  margin: 22px 0 28px;
-  padding: 0;
+.modules-page {
+  padding-bottom: 2rem;
 }
 
-:deep(.seccion_alerta .caja_alerta) {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 22px 28px;
+.modules-hero {
+  background: linear-gradient(110deg, #234b78 0%, #1f5fc8 70%, #2f66de 100%);
+  border-radius: 10px;
+  color: #fff;
+  padding: 1.5rem 1.75rem;
 }
 
-:deep(.seccion_alerta .material-symbols-outlined) {
-  flex-shrink: 0;
-  margin-top: 2px;
+.modules-hero p {
+  color: rgb(255 255 255 / 78%);
 }
 
-:deep(.seccion_alerta .contendido_alerta) {
-  line-height: 1.35;
+.modules-hero__badge {
+  background: rgb(255 255 255 / 14%);
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+  padding: 0.35rem 0.7rem;
 }
 
-:deep(.seccion_alerta .contendido_alerta b) {
-  margin-right: 6px;
+.modules-hero__panel {
+  background: rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 8px;
+  padding: 1.25rem;
 }
 
-.modulos-list {
-  width: 100%;
-  overflow: visible;
+.modules-hero__progress {
+  background: rgb(255 255 255 / 22%);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
 }
 
-.modulos-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 3rem 0;
-  gap: 1rem;
-}
-
-.modulos-loading-text {
-  margin: 0;
-  color: var(--bs-secondary);
-  font-size: 1rem;
-}
-
-.modulos-list>div {
-  overflow: visible;
-}
-
-.modulos-list h2 {
-  margin-bottom: 0.25rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modulo_descripcion {
-  margin: 0 0 1rem;
-  color: #1f2937;
-  font-size: 14px;
-  line-height: 1.35;
-}
-
-.seccion_tarjetas_responsive {
-  display: grid;
-  gap: 1.5rem;
-  grid-template-columns: repeat(1, 1fr);
-  width: 100%;
-  box-sizing: border-box;
-  overflow: visible;
-  position: relative;
-}
-
-.seccion_tarjetas_responsive .tarjeta_item {
-  min-width: 0;
-  width: 100%;
-  box-sizing: border-box;
-  overflow: visible;
-  position: relative;
-  z-index: 1;
-  display: block;
-}
-
-.seccion_tarjetas_responsive .tarjeta_item :deep(.seccion_tarjetas) {
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-.seccion_tarjetas_responsive .tarjeta_item :deep(.caja_tarjeta) {
+.modules-hero__progress > div {
+  background: #fff;
+  border-radius: inherit;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  flex-basis: auto;
-  flex-shrink: 1;
-  flex-grow: 0;
-  position: relative;
-  z-index: 2;
-  margin: 0;
 }
 
-.seccion_tarjetas_responsive .tarjeta_item :deep(.imagen_tarjeta) {
-  width: 100%;
-  max-width: 100%;
-  flex-shrink: 0;
+.module-toolbar {
+  width: min(100%, 560px);
 }
 
-.seccion_tarjetas_responsive .tarjeta_item :deep(.titulo_tarjeta) {
+.module-toolbar .form-select {
+  min-width: 220px;
+}
+
+.module-section {
+  background: transparent;
+}
+
+.activity-card {
+  overflow: hidden;
+}
+
+.activity-media {
+  aspect-ratio: 16 / 9;
+  background: #eef2f7;
+  overflow: hidden;
+}
+
+.activity-media img {
   display: block;
-  min-height: 4.5rem;
-  overflow: visible;
-  text-overflow: clip;
-  white-space: normal;
-  overflow-wrap: anywhere;
-  -webkit-line-clamp: unset;
-  -webkit-box-orient: initial;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  width: 100%;
+  transition: transform 0.3s ease;
 }
 
-@media (min-width: 576px) {
-  .seccion_tarjetas_responsive {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-  }
+.activity-card:hover .activity-media img {
+  transform: scale(1.05);
 }
 
-@media (min-width: 992px) {
-  .seccion_tarjetas_responsive {
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
+.activity-media img.error {
+  object-fit: contain;
+  padding: 1rem;
+}
+
+.status-badge {
+  border: 1px solid;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.45rem 0.7rem;
+  white-space: nowrap;
+}
+
+.upload-box {
+  background: #f8fafc;
+  border: 1px solid #d9dee8;
+  border-radius: 8px;
+  padding: 0.85rem;
+}
+
+@media (max-width: 575.98px) {
+  .module-toolbar,
+  .module-toolbar .form-select {
+    width: 100%;
   }
 }
 </style>
